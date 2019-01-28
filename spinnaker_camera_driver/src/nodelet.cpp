@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <camera_info_manager/camera_info_manager.h>  // ROS library that publishes CameraInfo topics
 #include <sensor_msgs/CameraInfo.h>                   // ROS message header for CameraInfo
 
+#include "std_msgs/Time.h"
 #include <wfov_camera_msgs/WFOVImage.h>
 #include <image_exposure_msgs/ExposureSequence.h>  // Message type for configuring gain and white balance.
 
@@ -329,6 +330,11 @@ private:
     image_transport::SubscriberStatusCallback cb = boost::bind(&SpinnakerCameraNodelet::connectCb, this);
     it_pub_ = it_->advertiseCamera("image_raw", 5, cb, cb);
 
+
+		pulse_time_sub = nh.subscribe("/vn100/pulse_time", 10, &SpinnakerCameraNodelet::pulse_time_cb, this);
+    pulse_time_estimate = ros::Time(0);
+    pulse_time_est_counter = 0;
+
     // Set up diagnostics
     updater_.setHardwareID("spinnaker_camera " + cinfo_name.str());
 
@@ -372,7 +378,11 @@ private:
     diag_man->addDiagnostic<int>("DeviceUptime");
     diag_man->addDiagnostic<int>("U3VMessageChannelID");
   }
-
+	void pulse_time_cb(const std_msgs::TimePtr msg)
+	{
+		pulse_time_estimate = msg->data;
+		pulse_time_est_counter++;
+  }
   /**
    * @brief Reads in the camera serial from a specified file path.
    * The format of the serial is expected to be base 16.
@@ -581,11 +591,20 @@ private:
             wfov_image->white_balance_red = wb_red_;
 
             // wfov_image->temperature = spinnaker_.getCameraTemperature();
-
-            ros::Time time = ros::Time::now();
-            wfov_image->header.stamp = time;
-            wfov_image->image.header.stamp = time;
-
+            if(pulse_time_estimate == ros::Time(0))
+            {
+              //NODELET_WARN("NO VN TIMESTAMP RECEIVED!!!!!!!!");
+              ros::Time time = ros::Time::now();
+              wfov_image->header.stamp = time;
+              wfov_image->image.header.stamp = time;
+            }
+            else
+            {
+              //NODELET_WARN("GOOD TIMESTAMP");
+              wfov_image->header.stamp = pulse_time_estimate;
+              wfov_image->image.header.stamp = pulse_time_estimate;
+              pulse_time_est_counter = 0;
+            }
             // Set the CameraInfo message
             ci_.reset(new sensor_msgs::CameraInfo(cinfo_->getCameraInfo()));
             ci_->header.stamp = wfov_image->image.header.stamp;
@@ -600,6 +619,9 @@ private:
             ci_->roi.do_rectify = do_rectify_;
 
             wfov_image->info = *ci_;
+
+            // FORCE image encoding to BGR8
+            wfov_image->image.encoding = sensor_msgs::image_encodings::BGR8;
 
             // Publish the full message
             pub_->publish(wfov_image);
@@ -673,6 +695,9 @@ private:
   /// requirements
   ros::Subscriber sub_;  ///< Subscriber for gain and white balance changes.
 
+  ros::Subscriber pulse_time_sub;
+  ros::Time pulse_time_estimate;
+  int pulse_time_est_counter;
   std::mutex connect_mutex_;
 
   diagnostic_updater::Updater updater_;  ///< Handles publishing diagnostics messages.

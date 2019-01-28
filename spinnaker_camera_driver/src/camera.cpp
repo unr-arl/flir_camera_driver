@@ -147,13 +147,18 @@ void Camera::setNewConfiguration(const SpinnakerConfig& config, const uint32_t& 
     // Set white balance
     if (IsAvailable(node_map_->GetNode("BalanceWhiteAuto")))
     {
-      setProperty(node_map_, "BalanceWhiteAuto", config.auto_white_balance);
+      //setProperty(node_map_, "BalanceWhiteAuto", config.auto_white_balance);
+      setProperty(node_map_, "BalanceWhiteAuto", "On");
       if (config.auto_white_balance.compare(std::string("Off")) == 0)
       {
-        setProperty(node_map_, "BalanceRatioSelector", "Blue");
-        setProperty(node_map_, "BalanceRatio", static_cast<float>(config.white_balance_blue_ratio));
-        setProperty(node_map_, "BalanceRatioSelector", "Red");
-        setProperty(node_map_, "BalanceRatio", static_cast<float>(config.white_balance_red_ratio));
+        ROS_WARN("AUTO_WHITE BAL OFF!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        //setProperty(node_map_, "BalanceRatioSelector", "Blue");
+        //setProperty(node_map_, "BalanceRatio", static_cast<float>(config.white_balance_blue_ratio));
+        //setProperty(node_map_, "BalanceRatio", static_cast<float>(800.0));
+
+        //setProperty(node_map_, "BalanceRatioSelector", "Red");
+        //setProperty(node_map_, "BalanceRatio", static_cast<float>(config.white_balance_red_ratio));
+        //setProperty(node_map_, "BalanceRatio", static_cast<float>(800.0));
       }
     }
   }
@@ -208,7 +213,9 @@ void Camera::setImageControlFormats(const spinnaker_camera_driver::SpinnakerConf
   setProperty(node_map_, "OffsetY", config.image_format_y_offset);
 
   // Set Pixel Format
+  ROS_INFO("SETTING PIXEL FORMAT");
   setProperty(node_map_, "PixelFormat", config.image_format_color_coding);
+  ROS_INFO("PIXEL FORMAT SET TO : %s", config.image_format_color_coding);
 }
 
 void Camera::setGain(const float& gain)
