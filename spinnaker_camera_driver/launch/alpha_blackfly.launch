@@ -54,3 +54,6 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
     </node>
   </group>
 </launch>
+
+<!-- Camera-to-LiDAR calibration(static tf) - alpha_blackfly to Velodyne(VLP16) August 14,2019 -->
+<!-- <node pkg="tf" type="static_transform_publisher" name="tf_lidar_cam" respawn="true" args="0.143373033912513 0.001844679769965 -0.152734883569140 -1.563483662924555 -0.001122948541060 -1.755796784911929 /velodyne /cam_blackfly 100"/>   -->
